@@ -18,11 +18,23 @@ if(-not(Test-Path -Path $mapping_file -PathType Leaf)) {
 }
 
 $match = Select-String -Path $mapping_file -Pattern "^$alias\s" | ForEach-Object { $_.Line }
-if("$match" -eq "") {
-    Write-Host "No mapping found in $mapping_file" -ForegroundColor Red
-    Return
+$target = ""
+if("$match" -ne "") {
+    $target = $match -split "(?=\s+)"| Select-Object -SkipIndex 0|Join-String | ForEach-Object { [Environment]::ExpandEnvironmentVariables($_).Trim() }
+}
+else
+{
+    $subFolders = Get-ChildItem -Directory|Where-Object Name -match "$alias" |Select-Object FullName
+    if($subFolders.Length -gt 1){
+        Write-Host "Mutiple matches found" -ForegroundColor Red
+        Return
+    }
+    if($subFolders.Length -eq 0){
+        Write-Host "No matche found" -ForegroundColor Red
+        Return
+    }
+    $target = $subFolders[0].FullName
 }
 
-$target = $match -split "(?=\s+)"| Select-Object -SkipIndex 0|Join-String | ForEach-Object { [Environment]::ExpandEnvironmentVariables($_).Trim() }
 Push-Location
 Set-Location $target
