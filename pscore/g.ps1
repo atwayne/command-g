@@ -25,15 +25,18 @@ if("$match" -ne "") {
 else
 {
     $subFolders = Get-ChildItem -Directory|Where-Object Name -match "$alias" |Select-Object FullName
-    if($subFolders.Length -gt 1){
-        Write-Host "Mutiple matches found" -ForegroundColor Red
-        Return
-    }
     if($subFolders.Length -eq 0){
         Write-Host "No matche found" -ForegroundColor Red
         Return
     }
-    $target = $subFolders[0].FullName
+    if($subFolders.Length -gt 1){
+        Write-Host "Mutiple matches found. Picked the shortest one" -ForegroundColor Yellow
+        $target = $subFolders| ForEach-Object { $_.FullName }| Sort-Object Length | Select-Object -First 1
+        Write-Host $target
+    }
+    else{
+        $target = $subFolders[0].FullName
+    }
 }
 
 Push-Location
